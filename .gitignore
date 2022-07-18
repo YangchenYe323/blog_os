@@ -1,0 +1,7 @@
+# compilation output
+/target
+
+# ide config
+.idea
+
+
