@@ -6,6 +6,7 @@ use spin::Mutex;
 use uart_16550::SerialPort;
 
 lazy_static! {
+  /// Global Serial Port
   pub static ref SERIAL1: Mutex<SerialPort> = {
     // 0x3F8 is the stanadard first I/O port number for serial ports
     let mut serial_port = unsafe { SerialPort::new(0x3F8) };

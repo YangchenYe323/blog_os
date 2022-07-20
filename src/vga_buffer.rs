@@ -1,6 +1,7 @@
 //! This module provides abstraction over the VGA text buffer
 //! to provides utilities of printing, etc.
 
+use core::result::Result::Ok;
 use spin::Mutex;
 use volatile::Volatile;
 
