@@ -4,4 +4,7 @@
 # ide config
 .idea
 
+# vscode config
+.vscode
 
+Cargo.lock
