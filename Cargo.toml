@@ -4,10 +4,25 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
+# link a bootloader of our kernel to package into a disk image
 bootloader = "0.9.8"
+# provides volatile memory access
 volatile = "0.2.6"
+# no-std spinlocks
 spin = "0.5.2"
+# interact with x86_64 ports
+x86_64 = "0.14.2"
+# send data over serial ports
+uart_16550 = "0.2.0"
 
+# initialize static values at runtime
 [dependencies.lazy_static]
 version = "1.0"
 features = ["spin_no_std"]
+
+# enable isa-debug-exit of qemu
+[package.metadata.bootimage]
+run-args = ["-device", "isa-debug-exit,iobase=0xf4,iosize=0x04", "-serial", "stdio"]
+test-args = ["-device", "isa-debug-exit,iobase=0xf4,iosize=0x04", "-serial", "stdio", "-display", "none"]
+test-success-exit-code = 33         # (0x10 << 1) | 1
+test-timeout = 30          			# (in seconds)

@@ -11,6 +11,7 @@ rustflags = ["-C", "link-args=-e __start -static -nostartfiles"]
 runner = "bootimage runner"
 
 [unstable]
+# build core & compiler builtin libraries on the fly
 build-std-features = ["compiler-builtins-mem"]
 build-std = ["core", "compiler_builtins"]
 
