@@ -15,6 +15,7 @@ use blog_os::test_harness::{exit_qemu, QemuExitCode};
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
   println!("Hello World!");
+  blog_os::init();
 
   #[cfg(test)]
   {
@@ -23,7 +24,12 @@ pub extern "C" fn _start() -> ! {
   }
 
   #[cfg(not(test))]
-  loop {}
+  {
+    // invoke breakpoint exception
+    x86_64::instructions::interrupts::int3();
+    println!("It did not crash!");
+    loop {}
+  }
 }
 
 /// This function is called on panic.

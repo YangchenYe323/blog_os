@@ -1,6 +1,7 @@
 //! This crate provides library code for blog_os kernel
 
 #![no_std]
+#![feature(abi_x86_interrupt)] // enable the unstable "x86-interrupt" calling convention
 #![cfg_attr(test, no_main)]
 #![feature(custom_test_frameworks)]
 #![test_runner(crate::test_harness::test_runner)]
@@ -10,13 +11,13 @@
 #[macro_use]
 extern crate lazy_static;
 
+pub mod interrupts;
 pub mod serial;
 pub mod test_harness;
 pub mod vga_buffer;
 
 #[cfg(test)]
 use crate::test_harness::{exit_qemu, test_panic_handler, QemuExitCode};
-
 #[cfg(test)]
 use core::panic::PanicInfo;
 
@@ -32,8 +33,14 @@ fn panic(info: &PanicInfo) -> ! {
 #[cfg(test)]
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
+  init();
   test_main();
   exit_qemu(QemuExitCode::Success)
+}
+
+/// Init procedure for the kernel
+pub fn init() {
+  interrupts::init_idt();
 }
 
 #[cfg(test)]
