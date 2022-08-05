@@ -3,6 +3,10 @@ name = "blog_os"
 version = "0.1.0"
 edition = "2018"
 
+[features]
+# use naked interrupt handler
+naked = []
+
 [dependencies]
 # link a bootloader of our kernel to package into a disk image
 bootloader = "0.9.8"

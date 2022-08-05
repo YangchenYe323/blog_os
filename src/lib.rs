@@ -12,9 +12,15 @@
 extern crate lazy_static;
 
 pub mod interrupts;
+pub mod naked_interrupts;
 pub mod serial;
 pub mod test_harness;
 pub mod vga_buffer;
+
+#[cfg(feature = "naked")]
+use naked_interrupts::init_idt;
+#[cfg(not(feature = "naked"))]
+use interrupts::init_idt;
 
 #[cfg(test)]
 use crate::test_harness::{exit_qemu, test_panic_handler, QemuExitCode};
@@ -40,7 +46,7 @@ pub extern "C" fn _start() -> ! {
 
 /// Init procedure for the kernel
 pub fn init() {
-  interrupts::init_idt();
+  init_idt();
 }
 
 #[cfg(test)]
