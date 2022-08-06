@@ -36,11 +36,16 @@ impl Idt {
 
   /// Set handler function to the nth entry,
   /// returning mutable reference to options for customization
-  pub fn set_handler(&mut self, entry: u8, handler: HandlerFunc) -> *mut EntryOptions {
+  pub fn set_handler(
+    &mut self,
+    entry: u8,
+    handler: HandlerFunc,
+  ) -> *mut EntryOptions {
     self.0[entry as usize] = Entry::new(segmentation::CS::get_reg(), handler);
 
     // since Entry is unaligned, we return a raw pointer here
-    let ptr: *mut EntryOptions = core::ptr::addr_of_mut!(self.0[entry as usize].options);
+    let ptr: *mut EntryOptions =
+      core::ptr::addr_of_mut!(self.0[entry as usize].options);
     ptr
   }
 
@@ -48,8 +53,8 @@ impl Idt {
   /// * `&'static self` we need self to live for the whole lifetime of the program.
   /// Otherwise, cpu might read freed memory where it thinks the IDT resides.
   pub fn load(&'static self) {
-    use x86_64::instructions::tables::{DescriptorTablePointer, lidt};
     use core::mem::size_of;
+    use x86_64::instructions::tables::{lidt, DescriptorTablePointer};
 
     let ptr = DescriptorTablePointer {
       // address of self
@@ -68,41 +73,41 @@ impl Idt {
 /// u16			gdt selector	selector of a code segment in the GDT.
 /// u16			Options			See [EntryOptions]
 /// u16			pointer_mid		middle bits of the address of handler function
-/// 
+///
 #[derive(Debug, Clone, Copy)]
 #[repr(C, packed)]
 pub struct Entry {
-	pointer_low: u16,
-	gdt_selector: SegmentSelector,
-	options: EntryOptions,
-	pointer_middle: u16,
-	pointer_high: u32,
-	reserved: u32,
+  pointer_low: u16,
+  gdt_selector: SegmentSelector,
+  options: EntryOptions,
+  pointer_middle: u16,
+  pointer_high: u32,
+  reserved: u32,
 }
 
 impl Entry {
   /// Create a new IDT entry
   pub fn new(gdt_selector: SegmentSelector, handler: HandlerFunc) -> Self {
-      let pointer = handler as u64;
-      Entry {
-          gdt_selector: gdt_selector,
-          pointer_low: pointer as u16,
-          pointer_middle: (pointer >> 16) as u16,
-          pointer_high: (pointer >> 32) as u32,
-          options: EntryOptions::new(),
-          reserved: 0,
-      }
+    let pointer = handler as u64;
+    Entry {
+      gdt_selector: gdt_selector,
+      pointer_low: pointer as u16,
+      pointer_middle: (pointer >> 16) as u16,
+      pointer_high: (pointer >> 32) as u32,
+      options: EntryOptions::new(),
+      reserved: 0,
+    }
   }
 
   /// Create a missing IDT entry
   fn missing() -> Self {
     Entry {
-        gdt_selector: SegmentSelector::new(0, PrivilegeLevel::Ring0),
-        pointer_low: 0,
-        pointer_middle: 0,
-        pointer_high: 0,
-        options: EntryOptions::minimal(),
-        reserved: 0,
+      gdt_selector: SegmentSelector::new(0, PrivilegeLevel::Ring0),
+      pointer_low: 0,
+      pointer_middle: 0,
+      pointer_high: 0,
+      options: EntryOptions::minimal(),
+      reserved: 0,
     }
   }
 }
@@ -123,9 +128,9 @@ const MINIMAL_VALID_OPTION: u16 = 0b0000111000000000;
 
 impl EntryOptions {
   /// Create a new option with all 0s except must-1 bits
-	pub fn minimal() -> Self {
-		EntryOptions(MINIMAL_VALID_OPTION)
-	}
+  pub fn minimal() -> Self {
+    EntryOptions(MINIMAL_VALID_OPTION)
+  }
 
   /// Create a new option with reasonable default.
   /// Present -> True
@@ -188,7 +193,6 @@ impl EntryOptions {
 /// jump to us and we have to handle return ourselves.
 pub type HandlerFunc = extern "C" fn() -> !;
 
-
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -216,7 +220,10 @@ mod tests {
   #[test_case]
   fn test_disable_interrupts() {
     let mut opt = EntryOptions::minimal();
-    opt.disable_interrupts(false).set_stack_index(3).set_present(true);
+    opt
+      .disable_interrupts(false)
+      .set_stack_index(3)
+      .set_present(true);
     assert_eq!(0b1000111100000011, opt.0);
   }
 }

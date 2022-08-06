@@ -25,11 +25,32 @@ pub extern "C" fn _start() -> ! {
 
   #[cfg(not(test))]
   {
-    // invoke breakpoint exception
-    x86_64::instructions::interrupts::int3();
+    // invalid opcode exception
+    // invalid_opcode();
+
+    // provoke a page fault
+    page_fault();
+
     println!("It did not crash!");
     loop {}
   }
+}
+
+#[allow(dead_code)]
+fn invalid_opcode() {
+  unsafe {
+    core::arch::asm!("ud2");
+  }
+}
+
+#[allow(dead_code)]
+fn breakpoint() {
+  x86_64::instructions::interrupts::int3();
+}
+
+#[allow(dead_code)]
+fn page_fault() {
+  unsafe { *(0xdeadbeaf as *mut u64) = 42 };
 }
 
 /// This function is called on panic.

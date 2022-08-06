@@ -1,6 +1,8 @@
 //! This crate provides library code for blog_os kernel
 
 #![no_std]
+#![feature(naked_functions)]
+#![feature(asm_sym)]
 #![feature(abi_x86_interrupt)] // enable the unstable "x86-interrupt" calling convention
 #![cfg_attr(test, no_main)]
 #![feature(custom_test_frameworks)]
@@ -17,10 +19,10 @@ pub mod serial;
 pub mod test_harness;
 pub mod vga_buffer;
 
-#[cfg(feature = "naked")]
-use naked_interrupts::init_idt;
 #[cfg(not(feature = "naked"))]
 use interrupts::init_idt;
+#[cfg(feature = "naked")]
+use naked_interrupts::init_idt;
 
 #[cfg(test)]
 use crate::test_harness::{exit_qemu, test_panic_handler, QemuExitCode};

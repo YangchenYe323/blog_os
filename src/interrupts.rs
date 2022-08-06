@@ -26,8 +26,6 @@ extern "x86-interrupt" fn breakpoint_handler(frame: InterruptStackFrame) {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
-
   #[test_case]
   fn test_breakpoint_exception() {
     // invoke a breakpoint exception
