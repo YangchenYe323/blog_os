@@ -12,7 +12,7 @@ pub(crate) use frame::ExceptionStackFrame;
 use crate::{handler, handler_with_err_code};
 use handlers::{
   breakpoint_handler, divide_by_zero_handler, invalid_opcode_handler,
-  page_fault_handler,
+  page_fault_handler, double_fault_handler
 };
 
 lazy_static! {
@@ -23,6 +23,13 @@ lazy_static! {
     idt.set_handler(3, handler!(breakpoint_handler));
     idt.set_handler(6, handler!(invalid_opcode_handler));
     idt.set_handler(14, handler_with_err_code!(page_fault_handler));
+    unsafe {
+      let opt = idt.set_handler(8, handler_with_err_code!(double_fault_handler));
+      let mut new_opt = opt.read_unaligned();
+      // the index is the array index, and should be added 1 for the option
+      new_opt.set_stack_index(crate::gdt::DOUBLE_FAULT_IST_INDEX + 1);
+      opt.write_unaligned(new_opt);
+    }
     idt
   };
 }

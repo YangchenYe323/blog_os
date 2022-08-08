@@ -15,12 +15,14 @@ extern crate lazy_static;
 
 pub mod interrupts;
 pub mod naked_interrupts;
+pub mod gdt;
 pub mod serial;
 pub mod test_harness;
 pub mod vga_buffer;
 
 #[cfg(not(feature = "naked"))]
 use interrupts::init_idt;
+
 #[cfg(feature = "naked")]
 use naked_interrupts::init_idt;
 
@@ -48,6 +50,7 @@ pub extern "C" fn _start() -> ! {
 
 /// Init procedure for the kernel
 pub fn init() {
+  gdt::init_gdt();
   init_idt();
 }
 

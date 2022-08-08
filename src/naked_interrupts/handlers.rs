@@ -1,6 +1,5 @@
 use super::ExceptionStackFrame;
 use crate::println;
-use core::arch::asm;
 
 /// Devide By Zero handler
 pub extern "C" fn divide_by_zero_handler(frame: &ExceptionStackFrame) -> ! {
@@ -28,13 +27,20 @@ pub extern "C" fn invalid_opcode_handler(frame: &ExceptionStackFrame) -> ! {
 pub extern "C" fn page_fault_handler(
   frame: &ExceptionStackFrame,
   err_code: u64,
-) -> !{
+) -> ! {
   println!(
     "EXCEPTION: PAGE FAULT with error code {:?}\n{:#?}",
     err_code, frame
   );
 
   loop {}
+}
+
+pub extern "C" fn double_fault_handler(
+  frame: &ExceptionStackFrame,
+  _err_code: u64,
+) -> ! {
+  panic!("EXCEPTION: DOUBLE_FAULT\n{:#?}", frame);
 }
 
 /// This macro wraps a fn(&ExceptionFrame) in the naked function that

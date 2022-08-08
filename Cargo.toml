@@ -7,6 +7,10 @@ edition = "2018"
 # use naked interrupt handler
 naked = []
 
+[[test]]
+name = "stack_overflow"
+harness = false
+
 [dependencies]
 # link a bootloader of our kernel to package into a disk image
 bootloader = "0.9.8"

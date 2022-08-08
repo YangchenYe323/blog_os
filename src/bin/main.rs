@@ -25,6 +25,12 @@ pub extern "C" fn _start() -> ! {
 
   #[cfg(not(test))]
   {
+
+    fn stack_overflow() {
+      stack_overflow(); // for each recursion, the return address is pushed
+    }
+    stack_overflow();
+
     // provoke breakpoint
     // breakpoint();
 
@@ -32,7 +38,7 @@ pub extern "C" fn _start() -> ! {
     // invalid_opcode();
 
     // provoke a page fault
-    page_fault();
+    // page_fault();
 
     println!("It did not crash!");
     loop {}

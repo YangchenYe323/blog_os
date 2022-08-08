@@ -9,6 +9,9 @@ lazy_static! {
   static ref IDT: InterruptDescriptorTable = {
     let mut idt = InterruptDescriptorTable::new();
     idt.breakpoint.set_handler_fn(breakpoint_handler);
+    unsafe {
+      idt.double_fault.set_handler_fn(double_fault_handler).set_stack_index(crate::gdt::DOUBLE_FAULT_IST_INDEX);
+    }
     idt
   };
 }
@@ -22,6 +25,13 @@ pub fn init_idt() {
 /// it is commonly used by debuggers for setting up break points in the program.
 extern "x86-interrupt" fn breakpoint_handler(frame: InterruptStackFrame) {
   println!("EXCEPTION: BREAKPOINT\n{:#?}", frame);
+}
+
+/// Double fault is triggered when a CPU exception occurs but the cpu failed to invoke
+/// the corresponding handler.
+/// We catch double fault to avoid the fatal triple fault which causes the system to reset.
+extern "x86-interrupt" fn double_fault_handler(frame: InterruptStackFrame, _err_code: u64) -> ! {
+  panic!("EXCEPTION: DOUBLE_FAULT\n{:#?}", frame);
 }
 
 #[cfg(test)]
