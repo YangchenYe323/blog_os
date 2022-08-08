@@ -6,20 +6,21 @@ use core::arch::asm;
 pub extern "C" fn divide_by_zero_handler(frame: &ExceptionStackFrame) -> ! {
   println!("EXCEPTION: DIVIDE BY ZERO");
   println!("{:#?}", frame);
+
   loop {}
 }
 
 /// Break point handler
-pub extern "C" fn breakpoint_handler(frame: &ExceptionStackFrame) -> ! {
+pub extern "C" fn breakpoint_handler(frame: &ExceptionStackFrame) {
   println!("EXCEPTION: BREAKPOINT");
   println!("{:#?}", frame);
-  loop {}
 }
 
 /// Invalid OpCode handler
 pub extern "C" fn invalid_opcode_handler(frame: &ExceptionStackFrame) -> ! {
   println!("EXCEPTION: INVALID OPCODE");
   println!("{:#x}\n{:#?}", frame.instruction_pointer, frame);
+
   loop {}
 }
 
@@ -27,46 +28,59 @@ pub extern "C" fn invalid_opcode_handler(frame: &ExceptionStackFrame) -> ! {
 pub extern "C" fn page_fault_handler(
   frame: &ExceptionStackFrame,
   err_code: u64,
-) -> ! {
+) -> !{
   println!(
     "EXCEPTION: PAGE FAULT with error code {:?}\n{:#?}",
     err_code, frame
   );
+
   loop {}
 }
 
-#[naked]
-#[allow(dead_code)]
-pub extern "C" fn breakpoint_handler_wrapper() -> ! {
-  unsafe {
-    // rdi is the place for the first argument in C calling convention,
-    // and its value should be the address of the ExceptionStackFrame, which is in rsp.
-    // We subract rsp by 8 to recover the 16-byte alignment of the rsp and rbp (The
-    // ExceptionStackFrame contains 5 u64, which makes for a total 40 bytes, which breaks the
-    // 16-byte alignment requirement)
-    asm!("mov rdi, rsp;
-              sub rsp, 8;
-              call {}", 
-              sym breakpoint_handler, 
-              options(noreturn));
-  }
-}
-
-/// This macro wraps a fn(&ExceptionFrame) -> ! in the naked function that
+/// This macro wraps a fn(&ExceptionFrame) in the naked function that
 /// handles argument passing and raw stack manipulations, producing an fn() -> !
 /// to use in the Interrupt Descripter Table [super::idt::Idt]
 #[macro_export]
 macro_rules! handler {
   ($name: ident) => {{
-      #[naked]
-      extern "C" fn wrapper() -> ! {
-          unsafe {
-              core::arch::asm!("mov rdi, rsp
-                    sub rsp, 8 // align the stack pointer
-                    call {}", sym $name, options(noreturn));
-          }
+    #[naked]
+    extern "C" fn wrapper() -> ! {
+      unsafe {
+        core::arch::asm!("
+          // safe all registers
+          push rax;
+          push rcx;
+          push rdx;
+          push rsi;
+          push rdi;
+          push r8;
+          push r9;
+          push r10;
+          push r11;
+
+          // calculate the address of the stack frame
+          mov rdi, rsp;
+          add rdi, 9*8;
+
+          // call handler functions
+          call {};
+
+          // restore all registers
+          pop r11;
+          pop r10;
+          pop r9;
+          pop r8;
+          pop rdi;
+          pop rsi;
+          pop rdx;
+          pop rcx;
+          pop rax;
+
+          // return from exception handler
+          iretq", sym $name, options(noreturn));
       }
-      wrapper
+    }
+    wrapper
   }}
 }
 
@@ -80,11 +94,52 @@ macro_rules! handler_with_err_code {
         unsafe {
           // pop error code into rsi, as error code is the lowest item
           // on the stack
-          core::arch::asm!(
-            "pop rsi;
-             mov rdi, rsp;
-             sub rsp, 8;
-             call {}",
+          core::arch::asm!("
+            // save all registers
+            push rax;
+            push rcx;
+            push rdx;
+            push rsi;
+            push rdi;
+            push r8;
+            push r9;
+            push r10;
+            push r11;
+
+            // rsi should store the error code,
+            // which locates at memory address (rsp + 9 * 8)
+            mov rsi, rsp;
+            add rsi, 9 * 8;
+            mov rsi, [rsi];
+
+            // rdi stores the address of the stack frame,
+            // which is rsp + 10 * 8
+            mov rdi, rsp;
+            add rdi, 10 * 8;
+
+            // align stack pointer
+            sub rsp, 8;
+
+            call {};
+
+            // undo align
+            add rsp, 8;
+
+            // restore all registers
+            pop r11;
+            pop r10;
+            pop r9;
+            pop r8;
+            pop rdi;
+            pop rsi;
+            pop rdx;
+            pop rcx;
+            pop rax;
+
+            // pop error code
+            add rsp, 8;
+
+            iretq",
             sym $name,
             options(noreturn));
         }

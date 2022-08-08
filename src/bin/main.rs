@@ -25,6 +25,9 @@ pub extern "C" fn _start() -> ! {
 
   #[cfg(not(test))]
   {
+    // provoke breakpoint
+    // breakpoint();
+
     // invalid opcode exception
     // invalid_opcode();
 
