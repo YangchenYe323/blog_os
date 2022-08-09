@@ -199,7 +199,7 @@ mod tests {
 
   #[test_case]
   fn test_default() {
-    let mut opt = EntryOptions::minimal();
+    let opt = EntryOptions::minimal();
     assert_eq!(MINIMAL_VALID_OPTION, opt.0);
   }
 

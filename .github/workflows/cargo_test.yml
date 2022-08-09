@@ -1,0 +1,42 @@
+on: 
+  push:
+    branches:
+      - master
+  pull_request:
+
+name: Cargo check and test
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          components: rust-src
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+  # test:
+  #   name: Test Suite
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: nightly 
+  #         components: rust-src, llvm-tools-preview
+  #     - uses: actions-rs/install@v0.1
+  #       with:
+  #         crate: bootimage
+  #         version: 0.10.3
+  #         use-tool-cache: true
+  #     -
+  #       name: Set up qemu
+  #       uses: docker/setup-qemu-action@v2
+  #     - uses: actions-rs/cargo@v1
+  #       with:
+  #         command: test

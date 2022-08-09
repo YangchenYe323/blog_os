@@ -187,8 +187,6 @@ impl core::fmt::Write for Writer {
 #[cfg(test)]
 mod tests {
 
-  use crate::interrupts;
-
   use super::*;
   use core::str::from_utf8;
 
