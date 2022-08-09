@@ -189,7 +189,7 @@ mod tests {
 
   use crate::interrupts;
 
-use super::*;
+  use super::*;
   use core::str::from_utf8;
 
   #[test_case]
@@ -212,7 +212,8 @@ use super::*;
     interrupts::without_interrupts(|| {
       println!("\n{}", s);
       for (i, c) in s.chars().enumerate() {
-        let screen_char = WRITER.lock().buffer.chars[BUFFER_HEIGHT - 2][i].read();
+        let screen_char =
+          WRITER.lock().buffer.chars[BUFFER_HEIGHT - 2][i].read();
         assert_eq!(char::from(screen_char.ascii_character), c);
       }
     });
@@ -234,8 +235,9 @@ use super::*;
         let col = i % BUFFER_WIDTH as usize;
         // serial_println!("{}, {}, {}", row_offset, col, i);
 
-        let screen_char =
-          WRITER.lock().buffer.chars[BUFFER_HEIGHT - 2 + row_offset][col].read();
+        let screen_char = WRITER.lock().buffer.chars
+          [BUFFER_HEIGHT - 2 + row_offset][col]
+          .read();
         assert_eq!(screen_char.ascii_character, *c);
       }
     });

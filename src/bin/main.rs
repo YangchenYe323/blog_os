@@ -6,7 +6,7 @@
 #![test_runner(blog_os::test_harness::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
-use blog_os::{print, println};
+use blog_os::println;
 use core::panic::PanicInfo;
 
 #[cfg(test)]
@@ -25,7 +25,6 @@ pub extern "C" fn _start() -> ! {
 
   #[cfg(not(test))]
   {
-
     // #[allow(unconditional_recursion)]
     // fn stack_overflow() {
     //   stack_overflow(); // for each recursion, the return address is pushed

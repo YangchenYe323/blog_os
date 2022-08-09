@@ -11,8 +11,8 @@ pub(crate) use frame::ExceptionStackFrame;
 
 use crate::{handler, handler_with_err_code};
 use handlers::{
-  breakpoint_handler, divide_by_zero_handler, invalid_opcode_handler,
-  page_fault_handler, double_fault_handler
+  breakpoint_handler, divide_by_zero_handler, double_fault_handler,
+  invalid_opcode_handler, page_fault_handler,
 };
 
 lazy_static! {

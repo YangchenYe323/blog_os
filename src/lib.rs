@@ -13,9 +13,9 @@
 #[macro_use]
 extern crate lazy_static;
 
+pub mod gdt;
 pub mod interrupts;
 pub mod naked_interrupts;
-pub mod gdt;
 pub mod serial;
 pub mod test_harness;
 pub mod vga_buffer;
@@ -64,7 +64,7 @@ pub fn init() {
 /// a much cpu-cheap mechanism of the hlt instruction.
 pub fn hlt_loop() -> ! {
   loop {
-      x86_64::instructions::hlt();
+    x86_64::instructions::hlt();
   }
 }
 

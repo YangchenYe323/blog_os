@@ -3,7 +3,7 @@
 //! the global interrupt descripter table
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
-use crate::{println, print};
+use crate::{print, println};
 use pic8259::ChainedPics;
 use spin;
 
@@ -73,7 +73,10 @@ extern "x86-interrupt" fn breakpoint_handler(frame: InterruptStackFrame) {
 /// Double fault is triggered when a CPU exception occurs but the cpu failed to invoke
 /// the corresponding handler.
 /// We catch double fault to avoid the fatal triple fault which causes the system to reset.
-extern "x86-interrupt" fn double_fault_handler(frame: InterruptStackFrame, _err_code: u64) -> ! {
+extern "x86-interrupt" fn double_fault_handler(
+  frame: InterruptStackFrame,
+  _err_code: u64,
+) -> ! {
   panic!("EXCEPTION: DOUBLE_FAULT\n{:#?}", frame);
 }
 
@@ -84,28 +87,37 @@ extern "x86-interrupt" fn timer_interrupt_handler(_frame: InterruptStackFrame) {
   // PIC expects to receive an "end-of-interrupt" signal so that it will send the next
   // interrupt. Sending this signal to notify PIC that we're done processing the current interrupt
   unsafe {
-    PICS.lock()
+    PICS
+      .lock()
       .notify_end_of_interrupt(InterruptIndex::Timer.as_u8());
   }
 }
 
 /// Keyboard interrupt handler
-extern "x86-interrupt" fn keyboard_interrupt_handler(_frame: InterruptStackFrame) {
-  use x86_64::instructions::port::Port;
-  use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
+extern "x86-interrupt" fn keyboard_interrupt_handler(
+  _frame: InterruptStackFrame,
+) {
+  use pc_keyboard::{
+    layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1,
+  };
   use spin::Mutex;
+  use x86_64::instructions::port::Port;
 
   // the global state machine for processing key events and map event to characters
   lazy_static! {
     static ref KEYBOARD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> =
-      Mutex::new(Keyboard::new(layouts::Us104Key, ScancodeSet1, HandleControl::Ignore));
+      Mutex::new(Keyboard::new(
+        layouts::Us104Key,
+        ScancodeSet1,
+        HandleControl::Ignore
+      ));
   }
 
   let mut keyboard = KEYBOARD.lock();
   // the data port of PS/2 controller, which is our I/O port
   let mut port = Port::new(0x60);
   let scancode: u8 = unsafe { port.read() };
-  // record this key-press operation, see if an event is matched 
+  // record this key-press operation, see if an event is matched
   if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
     // if processing the events generates a character to display
     if let Some(key) = keyboard.process_keyevent(key_event) {
@@ -117,7 +129,8 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(_frame: InterruptStackFrame
   }
 
   unsafe {
-    PICS.lock()
+    PICS
+      .lock()
       .notify_end_of_interrupt(InterruptIndex::Keyboard.as_u8());
   }
 }

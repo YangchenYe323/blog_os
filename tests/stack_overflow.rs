@@ -1,10 +1,12 @@
-
 #![no_std]
 #![no_main]
 #![feature(abi_x86_interrupt)]
 
+use blog_os::{
+  serial_print, serial_println, test_harness::exit_qemu,
+  test_harness::QemuExitCode,
+};
 use core::panic::PanicInfo;
-use blog_os::{serial_print, serial_println, test_harness::exit_qemu, test_harness::QemuExitCode};
 use lazy_static::lazy_static;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
@@ -12,7 +14,8 @@ lazy_static! {
   static ref TEST_IDT: InterruptDescriptorTable = {
     let mut idt = InterruptDescriptorTable::new();
     unsafe {
-      idt.double_fault
+      idt
+        .double_fault
         .set_handler_fn(test_double_fault_handler)
         .set_stack_index(blog_os::gdt::DOUBLE_FAULT_IST_INDEX);
     }
@@ -22,7 +25,7 @@ lazy_static! {
 
 extern "x86-interrupt" fn test_double_fault_handler(
   _frame: InterruptStackFrame,
-  _err_code: u64
+  _err_code: u64,
 ) -> ! {
   serial_println!("[ok]");
   exit_qemu(QemuExitCode::Success);
