@@ -42,12 +42,12 @@ pub extern "C" fn _start() -> ! {
     // page_fault();
 
     // provoke a deadlock
-    loop {
-      for _ in 0..10000 {
+    // loop {
+    //   for _ in 0..10000 {
 
-      }
-      print!("-");
-    }
+    //   }
+    //   print!("-");
+    // }
 
     println!("It did not crash!");
 

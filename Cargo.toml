@@ -24,6 +24,8 @@ x86_64 = "0.14.2"
 uart_16550 = "0.2.0"
 # interact with the 8259 programmable interrupt controller
 pic8259 = "0.10.1"
+# interpret scancode set and maps scancode to characters
+pc-keyboard = "0.5.0"
 
 # initialize static values at runtime
 [dependencies.lazy_static]

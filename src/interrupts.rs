@@ -21,6 +21,8 @@ pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
 pub enum InterruptIndex {
   /// Timer interrupt
   Timer = PIC_1_OFFSET,
+  /// Keyboard interrupt
+  Keyboard,
 }
 
 impl InterruptIndex {
@@ -45,6 +47,8 @@ lazy_static! {
 
     // set up timer interrupt handler
     idt[InterruptIndex::Timer.as_usize()].set_handler_fn(timer_interrupt_handler);
+    // set up keyboard interrupt handler
+    idt[InterruptIndex::Keyboard.as_usize()].set_handler_fn(keyboard_interrupt_handler);
 
     idt
   };
@@ -75,13 +79,46 @@ extern "x86-interrupt" fn double_fault_handler(frame: InterruptStackFrame, _err_
 
 /// Handles timer interrupt.
 extern "x86-interrupt" fn timer_interrupt_handler(_frame: InterruptStackFrame) {
-  print!(".");
-  
+  // nothing todo
+
   // PIC expects to receive an "end-of-interrupt" signal so that it will send the next
   // interrupt. Sending this signal to notify PIC that we're done processing the current interrupt
   unsafe {
     PICS.lock()
       .notify_end_of_interrupt(InterruptIndex::Timer.as_u8());
+  }
+}
+
+/// Keyboard interrupt handler
+extern "x86-interrupt" fn keyboard_interrupt_handler(_frame: InterruptStackFrame) {
+  use x86_64::instructions::port::Port;
+  use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
+  use spin::Mutex;
+
+  // the global state machine for processing key events and map event to characters
+  lazy_static! {
+    static ref KEYBOARD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> =
+      Mutex::new(Keyboard::new(layouts::Us104Key, ScancodeSet1, HandleControl::Ignore));
+  }
+
+  let mut keyboard = KEYBOARD.lock();
+  // the data port of PS/2 controller, which is our I/O port
+  let mut port = Port::new(0x60);
+  let scancode: u8 = unsafe { port.read() };
+  // record this key-press operation, see if an event is matched 
+  if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
+    // if processing the events generates a character to display
+    if let Some(key) = keyboard.process_keyevent(key_event) {
+      match key {
+        DecodedKey::Unicode(character) => print!("{}", character),
+        DecodedKey::RawKey(key) => print!("{:?}", key),
+      }
+    }
+  }
+
+  unsafe {
+    PICS.lock()
+      .notify_end_of_interrupt(InterruptIndex::Keyboard.as_u8());
   }
 }
 
