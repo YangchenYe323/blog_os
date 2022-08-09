@@ -6,7 +6,7 @@
 #![test_runner(blog_os::test_harness::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
-use blog_os::println;
+use blog_os::{print, println};
 use core::panic::PanicInfo;
 
 #[cfg(test)]
@@ -26,10 +26,11 @@ pub extern "C" fn _start() -> ! {
   #[cfg(not(test))]
   {
 
-    fn stack_overflow() {
-      stack_overflow(); // for each recursion, the return address is pushed
-    }
-    stack_overflow();
+    // #[allow(unconditional_recursion)]
+    // fn stack_overflow() {
+    //   stack_overflow(); // for each recursion, the return address is pushed
+    // }
+    // stack_overflow();
 
     // provoke breakpoint
     // breakpoint();
@@ -40,8 +41,17 @@ pub extern "C" fn _start() -> ! {
     // provoke a page fault
     // page_fault();
 
+    // provoke a deadlock
+    loop {
+      for _ in 0..10000 {
+
+      }
+      print!("-");
+    }
+
     println!("It did not crash!");
-    loop {}
+
+    blog_os::hlt_loop();
   }
 }
 
@@ -67,7 +77,7 @@ fn page_fault() {
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
   println!("{}", info);
-  loop {}
+  blog_os::hlt_loop();
 }
 
 #[cfg(test)]

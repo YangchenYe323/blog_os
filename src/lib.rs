@@ -52,6 +52,20 @@ pub extern "C" fn _start() -> ! {
 pub fn init() {
   gdt::init_gdt();
   init_idt();
+  // initialize interrupt controller
+  unsafe {
+    interrupts::PICS.lock().initialize();
+  }
+  // enable hardware interrupts
+  x86_64::instructions::interrupts::enable();
+}
+
+/// Halt the cpu until the next interrupt occurs using
+/// a much cpu-cheap mechanism of the hlt instruction.
+pub fn hlt_loop() -> ! {
+  loop {
+      x86_64::instructions::hlt();
+  }
 }
 
 #[cfg(test)]

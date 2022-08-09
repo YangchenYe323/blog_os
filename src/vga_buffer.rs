@@ -31,7 +31,13 @@ macro_rules! println {
 #[doc(hidden)]
 pub fn _print(args: core::fmt::Arguments) {
   use core::fmt::Write;
-  WRITER.lock().write_fmt(args).unwrap();
+  use x86_64::instructions::interrupts;
+
+  // If an interrupt occurs when we hold this lock, and the handler
+  // tries to print something, then the system would deadlock.
+  interrupts::without_interrupts(|| {
+    WRITER.lock().write_fmt(args).unwrap();
+  });
 }
 
 /// Represents the color recognized by VGA
@@ -181,7 +187,9 @@ impl core::fmt::Write for Writer {
 #[cfg(test)]
 mod tests {
 
-  use super::*;
+  use crate::interrupts;
+
+use super::*;
   use core::str::from_utf8;
 
   #[test_case]
@@ -198,29 +206,38 @@ mod tests {
 
   #[test_case]
   fn test_println_output() {
+    use x86_64::instructions::interrupts;
+
     let s = "Some test string that fits on a single line";
-    println!("{}", s);
-    for (i, c) in s.chars().enumerate() {
-      let screen_char = WRITER.lock().buffer.chars[BUFFER_HEIGHT - 2][i].read();
-      assert_eq!(char::from(screen_char.ascii_character), c);
-    }
+    interrupts::without_interrupts(|| {
+      println!("\n{}", s);
+      for (i, c) in s.chars().enumerate() {
+        let screen_char = WRITER.lock().buffer.chars[BUFFER_HEIGHT - 2][i].read();
+        assert_eq!(char::from(screen_char.ascii_character), c);
+      }
+    });
   }
 
   #[test_case]
   fn test_long_print_wrap() {
+    use x86_64::instructions::interrupts;
+
     const LEN: usize = 2 * BUFFER_WIDTH as usize;
     let s: [u8; LEN] = [b'a'; LEN];
-    // this should be wrapped and occupies two row
-    print!("{}", from_utf8(&s).unwrap());
 
-    for (i, c) in s.iter().enumerate() {
-      let row_offset = i / BUFFER_WIDTH as usize;
-      let col = i % BUFFER_WIDTH as usize;
-      // serial_println!("{}, {}, {}", row_offset, col, i);
+    interrupts::without_interrupts(|| {
+      // this should be wrapped and occupies two row
+      print!("{}", from_utf8(&s).unwrap());
 
-      let screen_char =
-        WRITER.lock().buffer.chars[BUFFER_HEIGHT - 2 + row_offset][col].read();
-      assert_eq!(screen_char.ascii_character, *c);
-    }
+      for (i, c) in s.iter().enumerate() {
+        let row_offset = i / BUFFER_WIDTH as usize;
+        let col = i % BUFFER_WIDTH as usize;
+        // serial_println!("{}, {}, {}", row_offset, col, i);
+
+        let screen_char =
+          WRITER.lock().buffer.chars[BUFFER_HEIGHT - 2 + row_offset][col].read();
+        assert_eq!(screen_char.ascii_character, *c);
+      }
+    });
   }
 }
