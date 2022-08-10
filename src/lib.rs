@@ -1,13 +1,13 @@
 //! This crate provides library code for blog_os kernel
 
 #![no_std]
-#![feature(naked_functions)]
-#![feature(asm_sym)]
+#![feature(naked_functions)] // enable naked functions for interrupt handling
+#![feature(asm_sym)] // enable sym keyword in rust asm
 #![feature(abi_x86_interrupt)] // enable the unstable "x86-interrupt" calling convention
-#![cfg_attr(test, no_main)]
 #![feature(custom_test_frameworks)]
 #![test_runner(crate::test_harness::test_runner)]
 #![reexport_test_harness_main = "test_main"]
+#![cfg_attr(test, no_main)]
 #![warn(missing_docs)]
 
 #[macro_use]
