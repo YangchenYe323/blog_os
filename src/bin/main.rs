@@ -25,6 +25,10 @@ pub extern "C" fn _start() -> ! {
 
   #[cfg(not(test))]
   {
+    use x86_64::registers::control::Cr3;
+    let (level_4_page_table, _) = Cr3::read();
+    println!("Level 4 page table at {:?}", level_4_page_table.start_address());
+
     // #[allow(unconditional_recursion)]
     // fn stack_overflow() {
     //   stack_overflow(); // for each recursion, the return address is pushed
@@ -38,7 +42,7 @@ pub extern "C" fn _start() -> ! {
     // invalid_opcode();
 
     // provoke a page fault
-    // page_fault();
+    page_fault();
 
     // provoke a deadlock
     // loop {
@@ -68,7 +72,14 @@ fn breakpoint() {
 
 #[allow(dead_code)]
 fn page_fault() {
-  unsafe { *(0xdeadbeaf as *mut u64) = 42 };
+  // this is a read-only code page
+  let ptr = 0x205495 as *mut i32;
+  unsafe {
+    // read should succeed and read in some garbage
+    println!("{}", *ptr);
+  }
+  // this causes page fault
+  unsafe { *(0x205495 as *mut u64) = 42 };
 }
 
 /// This function is called on panic.
