@@ -12,6 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          components: rust-src
       - run: cargo +nightly check --all-features
   
   check_formatting:
@@ -20,6 +24,10 @@ jobs:
     timeout-minutes: 5
     steps:
     - uses: actions/checkout@v1
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        components: rustfmt, rust-src
     - run: cargo +nightly fmt -- --check
 
   clippy:
@@ -27,6 +35,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        components: rust-src, clippy
     - run: cargo +nightly clippy --all -- -D warnings
 
   test:
@@ -34,6 +46,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly 
+          components: rust-src, llvm-tools-preview
       - uses: actions-rs/install@v0.1
         with:
           crate: bootimage
