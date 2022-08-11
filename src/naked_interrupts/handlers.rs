@@ -1,12 +1,12 @@
 use super::ExceptionStackFrame;
-use crate::println;
+use crate::{println, hlt_loop};
 
 /// Devide By Zero handler
 pub extern "C" fn divide_by_zero_handler(frame: &ExceptionStackFrame) -> ! {
   println!("EXCEPTION: DIVIDE BY ZERO");
   println!("{:#?}", frame);
 
-  loop {}
+  hlt_loop();
 }
 
 /// Break point handler
@@ -20,7 +20,7 @@ pub extern "C" fn invalid_opcode_handler(frame: &ExceptionStackFrame) -> ! {
   println!("EXCEPTION: INVALID OPCODE");
   println!("{:#x}\n{:#?}", frame.instruction_pointer, frame);
 
-  loop {}
+  hlt_loop();
 }
 
 /// Page fault handler
@@ -33,7 +33,7 @@ pub extern "C" fn page_fault_handler(
     err_code, frame
   );
 
-  loop {}
+  hlt_loop();
 }
 
 pub extern "C" fn double_fault_handler(

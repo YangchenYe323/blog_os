@@ -32,6 +32,13 @@ jobs:
         components: rustfmt, rust-src
     - run: cargo +nightly fmt -- --check
 
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - run: cargo -nightly clippy --all -- -D warnings
+
   test:
     name: Test Suite
     runs-on: ubuntu-latest

@@ -67,12 +67,18 @@ impl Idt {
   }
 }
 
+impl Default for Idt {
+  fn default() -> Self {
+      Self::new()
+  }
+}
+
 /// An IDT entry of the following format:
-/// Type		Name			Description
-/// u16			pointer_low		lower bits of the address of handler function
-/// u16			gdt selector	selector of a code segment in the GDT.
-/// u16			Options			See [EntryOptions]
-/// u16			pointer_mid		middle bits of the address of handler function
+/// Type        Name            Description
+/// u16            pointer_low        lower bits of the address of handler function
+/// u16            gdt selector    selector of a code segment in the GDT.
+/// u16            Options            See [EntryOptions]
+/// u16            pointer_mid        middle bits of the address of handler function
 ///
 #[derive(Debug, Clone, Copy)]
 #[repr(C, packed)]
@@ -88,9 +94,9 @@ pub struct Entry {
 impl Entry {
   /// Create a new IDT entry
   pub fn new(gdt_selector: SegmentSelector, handler: HandlerFunc) -> Self {
-    let pointer = handler as u64;
+    let pointer = handler as usize as u64;
     Entry {
-      gdt_selector: gdt_selector,
+      gdt_selector,
       pointer_low: pointer as u16,
       pointer_middle: (pointer >> 16) as u16,
       pointer_high: (pointer >> 32) as u32,
@@ -113,14 +119,14 @@ impl Entry {
 }
 
 /// EntryOptions wraps a 16-bit integer with the following structure:
-/// Bits		Name							Description
-/// 0-2			Interrupt Stack Table Index		0: don't switch stack, 1-7: switch to the nth stack in the table
-/// 3-7			Reserved
-/// 8			0: Interrupt Gate, 1: Trap Gate	If 0, disable hardware interrupts
-/// 9-11		Must be 1
-/// 12			Must be 0
-/// 13-14		Descriptor Privilage Level		The minimal privilege level required for calling this handler.
-/// 15			Present
+/// Bits        Name                               Description
+/// 0-2         Interrupt Stack Table Index        0: don't switch stack, 1-7: switch to the nth stack in the table
+/// 3-7         Reserved
+/// 8           0: Interrupt Gate, 1: Trap Gate    If 0, disable hardware interrupts
+/// 9-11        Must be 1
+/// 12          Must be 0
+/// 13-14       Descriptor Privilage Level         The minimal privilege level required for calling this handler.
+/// 15          Present
 #[derive(Debug, Clone, Copy)]
 pub struct EntryOptions(u16);
 
@@ -181,6 +187,12 @@ impl EntryOptions {
     self.0 = (self.0 & 0xfff8) | index;
 
     self
+  }
+}
+
+impl Default for EntryOptions {
+  fn default() -> Self {
+      Self::new()
   }
 }
 
