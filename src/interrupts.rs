@@ -1,9 +1,11 @@
 //! This module contains CPU's interrupt handling functionalities.
 //! It defines handlers for different kinds of interrupts and manipulates
 //! the global interrupt descripter table
-use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
+use x86_64::structures::idt::{
+  InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode,
+};
 
-use crate::{print, println};
+use crate::{hlt_loop, print, println};
 use pic8259::ChainedPics;
 use spin;
 
@@ -44,6 +46,7 @@ lazy_static! {
     unsafe {
       idt.double_fault.set_handler_fn(double_fault_handler).set_stack_index(crate::gdt::DOUBLE_FAULT_IST_INDEX);
     }
+    idt.page_fault.set_handler_fn(page_fault_handler);
 
     // set up timer interrupt handler
     idt[InterruptIndex::Timer.as_usize()].set_handler_fn(timer_interrupt_handler);
@@ -68,6 +71,20 @@ pub fn init_idt() {
 /// it is commonly used by debuggers for setting up break points in the program.
 extern "x86-interrupt" fn breakpoint_handler(frame: InterruptStackFrame) {
   println!("EXCEPTION: BREAKPOINT\n{:#?}", frame);
+}
+
+/// Page fault handler
+extern "x86-interrupt" fn page_fault_handler(
+  frame: InterruptStackFrame,
+  error_code: PageFaultErrorCode,
+) {
+  use x86_64::registers::control::Cr2;
+
+  println!("EXCEPTION: PAGE FAULT");
+  println!("Accessed Address: {:?}", Cr2::read());
+  println!("Error Code: {:?}", error_code);
+  println!("{:#?}", frame);
+  hlt_loop();
 }
 
 /// Double fault is triggered when a CPU exception occurs but the cpu failed to invoke

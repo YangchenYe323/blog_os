@@ -16,9 +16,7 @@ jobs:
         with:
           toolchain: nightly
           components: rust-src
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
+      - run: cargo +nightly check --all-features
   
   check_formatting:
     name: Check Formatting
@@ -31,6 +29,17 @@ jobs:
         toolchain: nightly
         components: rustfmt, rust-src
     - run: cargo +nightly fmt -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        components: rust-src, clippy
+    - run: cargo +nightly clippy --all -- -D warnings
 
   test:
     name: Test Suite
