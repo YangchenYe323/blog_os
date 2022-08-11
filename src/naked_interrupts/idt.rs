@@ -69,7 +69,7 @@ impl Idt {
 
 impl Default for Idt {
   fn default() -> Self {
-      Self::new()
+    Self::new()
   }
 }
 
@@ -192,7 +192,7 @@ impl EntryOptions {
 
 impl Default for EntryOptions {
   fn default() -> Self {
-      Self::new()
+    Self::new()
   }
 }
 

@@ -1,5 +1,5 @@
 use super::ExceptionStackFrame;
-use crate::{println, hlt_loop};
+use crate::{hlt_loop, println};
 
 /// Devide By Zero handler
 pub extern "C" fn divide_by_zero_handler(frame: &ExceptionStackFrame) -> ! {

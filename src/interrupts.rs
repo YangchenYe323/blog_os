@@ -1,9 +1,11 @@
 //! This module contains CPU's interrupt handling functionalities.
 //! It defines handlers for different kinds of interrupts and manipulates
 //! the global interrupt descripter table
-use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
+use x86_64::structures::idt::{
+  InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode,
+};
 
-use crate::{print, println, hlt_loop};
+use crate::{hlt_loop, print, println};
 use pic8259::ChainedPics;
 use spin;
 
@@ -74,7 +76,7 @@ extern "x86-interrupt" fn breakpoint_handler(frame: InterruptStackFrame) {
 /// Page fault handler
 extern "x86-interrupt" fn page_fault_handler(
   frame: InterruptStackFrame,
-  error_code: PageFaultErrorCode
+  error_code: PageFaultErrorCode,
 ) {
   use x86_64::registers::control::Cr2;
 
