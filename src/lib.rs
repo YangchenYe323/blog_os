@@ -9,17 +9,21 @@
 #![reexport_test_harness_main = "test_main"]
 #![cfg_attr(test, no_main)]
 #![warn(missing_docs)]
+#![deny(unsafe_op_in_unsafe_fn)]
 
 #[macro_use]
 extern crate lazy_static;
 
 pub mod gdt;
 pub mod interrupts;
+pub mod memory;
 pub mod naked_interrupts;
 pub mod serial;
 pub mod test_harness;
 pub mod vga_buffer;
 
+#[cfg(test)]
+use bootloader::{entry_point, BootInfo};
 #[cfg(not(feature = "naked"))]
 use interrupts::init_idt;
 
@@ -38,11 +42,14 @@ fn panic(info: &PanicInfo) -> ! {
   test_panic_handler(info)
 }
 
+#[cfg(test)]
+entry_point!(test_kernel_main);
+
 /// The entry point of our kernel library,
 /// only needed when running tests
 #[cfg(test)]
 #[no_mangle]
-pub extern "C" fn _start() -> ! {
+pub fn test_kernel_main(boot_info: &'static BootInfo) -> ! {
   init();
   test_main();
   exit_qemu(QemuExitCode::Success)

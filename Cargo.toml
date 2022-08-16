@@ -11,9 +11,11 @@ naked = []
 name = "stack_overflow"
 harness = false
 
+[[test]]
+name = "page_table_access"
+harness = false
+
 [dependencies]
-# link a bootloader of our kernel to package into a disk image
-bootloader = "0.9.8"
 # provides volatile memory access
 volatile = "0.2.6"
 # no-std spinlocks
@@ -26,6 +28,11 @@ uart_16550 = "0.2.0"
 pic8259 = "0.10.1"
 # interpret scancode set and maps scancode to characters
 pc-keyboard = "0.5.0"
+
+# link a bootloader of our kernel to package into a disk image
+[dependencies.bootloader]
+version = "0.9.8"
+features = ["map_physical_memory"]
 
 # initialize static values at runtime
 [dependencies.lazy_static]

@@ -1,3 +1,6 @@
+//! Tess the kernel handles stack overflow exception correctly
+//! by switching to a new kernel stack for double fault.
+
 #![no_std]
 #![no_main]
 #![feature(abi_x86_interrupt)]
