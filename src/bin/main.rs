@@ -7,13 +7,22 @@
 #![reexport_test_harness_main = "test_main"]
 
 use blog_os::println;
+use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
 
 #[cfg(test)]
 use blog_os::test_harness::{exit_qemu, QemuExitCode};
 
+// register [kernel_main] as the entry point called by bootloader.
+entry_point!(kernel_main);
+
+/// The [bootloader] we use passes in [BootInfo] to the start procedure.
+/// It contains an overview of the memory layout of the system
+/// and an offset from which physical addresses start. That is, we can
+/// visit arbitrary physical address 'x' by visiting virtual address
+/// 'x' + 'offset'.
 #[no_mangle]
-pub extern "C" fn _start() -> ! {
+fn kernel_main(boot_info: &'static BootInfo) -> ! {
   println!("Hello World!");
   blog_os::init();
 
@@ -25,12 +34,49 @@ pub extern "C" fn _start() -> ! {
 
   #[cfg(not(test))]
   {
-    use x86_64::registers::control::Cr3;
-    let (level_4_page_table, _) = Cr3::read();
-    println!(
-      "Level 4 page table at {:?}",
-      level_4_page_table.start_address()
+    use x86_64::structures::paging::Translate;
+    use x86_64::VirtAddr;
+
+    let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
+
+    let addresses = [
+      // the identity-mapped vga buffer page
+      0xb8000,
+      // some code page
+      0x201008,
+      // some stack page
+      0x0100_0020_1a10,
+      // virtual address mapped to physical address 0
+      boot_info.physical_memory_offset,
+    ];
+
+    // use OffsetPageTable
+    let mut mapper =
+      unsafe { blog_os::memory::init_offset_page_table(phys_mem_offset) };
+    for &address in &addresses {
+      let virt = VirtAddr::new(address);
+      // new: use the `mapper.translate_addr` method
+      let phys = mapper.translate_addr(virt);
+      println!("{:?} -> {:?}", virt, phys);
+    }
+
+    // map an unused page
+    use x86_64::structures::paging::Page;
+    let mut frame_allocator = unsafe {
+      blog_os::memory::BootInfoFrameAllocator::init(&boot_info.memory_map)
+    };
+
+    let page = Page::containing_address(VirtAddr::new(0xdeadbeef));
+    // map this page to 0x8000
+    blog_os::memory::create_example_mapping(
+      page,
+      &mut mapper,
+      &mut frame_allocator,
     );
+
+    // write the string `New!` to the screen through the new mapping
+    let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
+    unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e) };
 
     // #[allow(unconditional_recursion)]
     // fn stack_overflow() {
@@ -45,7 +91,7 @@ pub extern "C" fn _start() -> ! {
     // invalid_opcode();
 
     // provoke a page fault
-    page_fault();
+    // page_fault();
 
     // provoke a deadlock
     // loop {

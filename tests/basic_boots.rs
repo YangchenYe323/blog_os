@@ -1,3 +1,5 @@
+//! Test that the kernel boots and runs the test correctly.
+
 #![no_std]
 #![no_main]
 #![feature(custom_test_frameworks)]
