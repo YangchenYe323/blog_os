@@ -28,6 +28,8 @@ uart_16550 = "0.2.0"
 pic8259 = "0.10.1"
 # interpret scancode set and maps scancode to characters
 pc-keyboard = "0.5.0"
+# heap allocator backed by a linked list
+linked_list_allocator = "0.9.0"
 
 # link a bootloader of our kernel to package into a disk image
 [dependencies.bootloader]
