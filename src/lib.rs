@@ -4,8 +4,9 @@
 #![feature(naked_functions)] // enable naked functions for interrupt handling
 #![feature(asm_sym)] // enable sym keyword in rust asm
 #![feature(abi_x86_interrupt)] // enable the unstable "x86-interrupt" calling convention
-#![feature(custom_test_frameworks)]
-#![test_runner(crate::test_harness::test_runner)]
+#![feature(custom_test_frameworks)] // use custom test harness
+#![feature(alloc_error_handler)] // specify a handler when allocation error occurs
+#![test_runner(crate::test_harness::test_runner)] // specify test_runner
 #![reexport_test_harness_main = "test_main"]
 #![cfg_attr(test, no_main)]
 #![warn(missing_docs)]
@@ -13,7 +14,9 @@
 
 #[macro_use]
 extern crate lazy_static;
+extern crate alloc;
 
+pub mod allocator;
 pub mod gdt;
 pub mod interrupts;
 pub mod memory;

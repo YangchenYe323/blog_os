@@ -11,6 +11,7 @@ use x86_64::VirtAddr;
 pub const DOUBLE_FAULT_IST_INDEX: u16 = 0;
 
 lazy_static! {
+  // Global descriptor table that contains information needed for kernel and CPU
   static ref GDT: (GlobalDescriptorTable, Selectors) = {
     let mut gdt = GlobalDescriptorTable::new();
     let code_selector = gdt.add_entry(Descriptor::kernel_code_segment());
@@ -18,6 +19,7 @@ lazy_static! {
     (gdt, Selectors {code_selector, tss_selector})
   };
 
+  // Task State Segment Descriptor that contains the interrupt stack table
   static ref TSS: TaskStateSegment = {
     let mut tss = TaskStateSegment::new();
     tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX as usize] = {
@@ -45,7 +47,9 @@ pub fn init_gdt() {
   GDT.0.load();
 
   unsafe {
+    // update code segment register, which points to an entry in GDT in protected mode
     CS::set_reg(GDT.1.code_selector);
+    // update tss segment register, which points to an entry in GDT in protected mod
     load_tss(GDT.1.tss_selector);
   }
 }

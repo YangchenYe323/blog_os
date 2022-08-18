@@ -1,6 +1,7 @@
 //! This module contains CPU's interrupt handling functionalities.
 //! It defines handlers for different kinds of interrupts and manipulates
 //! the global interrupt descripter table
+
 use x86_64::structures::idt::{
   InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode,
 };
@@ -40,6 +41,7 @@ impl InterruptIndex {
 }
 
 lazy_static! {
+  // Interrupt Descriptor Table contains CPU exception & hardware interrupt handlers
   static ref IDT: InterruptDescriptorTable = {
     let mut idt = InterruptDescriptorTable::new();
     idt.breakpoint.set_handler_fn(breakpoint_handler);
@@ -64,6 +66,7 @@ lazy_static! {
 
 /// Initialize interupt descripter table
 pub fn init_idt() {
+  // load IDT using lidt instruction
   IDT.load();
 }
 
