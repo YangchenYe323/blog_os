@@ -1,7 +1,10 @@
 //! This module contains the kernel's heap memory allocators.
 
+pub mod bump;
+
 use alloc::alloc::{GlobalAlloc, Layout};
 use core::ptr::null_mut;
+#[cfg(not(feature = "bump"))]
 use linked_list_allocator::LockedHeap;
 use x86_64::{
   structures::paging::{
@@ -25,7 +28,6 @@ unsafe impl GlobalAlloc for Dummy {
   }
 }
 
-// #[global_allocator]
 #[allow(dead_code)]
 static DUMMY_ALLOCATOR: Dummy = Dummy;
 
@@ -73,5 +75,30 @@ pub fn init_heap(
 
 /// ALERT: don't use allocation inside an interrupt handler, as that might
 /// cause deadlock for concurrent access to ALLOCATOR
+#[cfg(not(feature = "bump"))]
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
+
+#[cfg(feature = "bump")]
+#[global_allocator]
+static ALLOCATOR: Locked<bump::BumpAllocator> =
+  Locked::new(bump::BumpAllocator::new());
+
+/// A wrapper around [spin::Mutex] to permit trait implementations.
+pub struct Locked<A> {
+  inner: spin::Mutex<A>,
+}
+
+impl<A> Locked<A> {
+  /// Create a new instance
+  pub const fn new(inner: A) -> Self {
+    Locked {
+      inner: spin::Mutex::new(inner),
+    }
+  }
+
+  /// Lock to get mutable reference of the inner
+  pub fn lock(&self) -> spin::MutexGuard<A> {
+    self.inner.lock()
+  }
+}
