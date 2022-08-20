@@ -6,6 +6,7 @@
 #![feature(abi_x86_interrupt)] // enable the unstable "x86-interrupt" calling convention
 #![feature(custom_test_frameworks)] // use custom test harness
 #![feature(alloc_error_handler)] // specify a handler when allocation error occurs
+#![feature(const_mut_refs)] // enable mutable reference in const fn
 #![test_runner(crate::test_harness::test_runner)] // specify test_runner
 #![reexport_test_harness_main = "test_main"]
 #![cfg_attr(test, no_main)]

@@ -2,7 +2,7 @@
 
 use core::alloc::{GlobalAlloc, Layout};
 
-use super::Locked;
+use super::{align_up, Locked};
 
 /// The [BumpAllocator] type.
 /// It maintains a `next` field that points to the start of unused
@@ -68,11 +68,4 @@ unsafe impl GlobalAlloc for Locked<BumpAllocator> {
       s.next = s.heap_start;
     }
   }
-}
-
-/// Align the given address `addr` upwards to alignment `align`.
-///
-/// Requires that `align` is a power of two.
-fn align_up(addr: usize, align: usize) -> usize {
-  (addr + align - 1) & !(align - 1)
 }

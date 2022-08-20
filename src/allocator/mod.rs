@@ -1,11 +1,10 @@
 //! This module contains the kernel's heap memory allocators.
 
 pub mod bump;
+pub mod linked_list;
 
 use alloc::alloc::{GlobalAlloc, Layout};
 use core::ptr::null_mut;
-#[cfg(not(feature = "bump"))]
-use linked_list_allocator::LockedHeap;
 use x86_64::{
   structures::paging::{
     mapper::MapToError, FrameAllocator, Mapper, Page, PageTableFlags, Size4KiB,
@@ -77,7 +76,8 @@ pub fn init_heap(
 /// cause deadlock for concurrent access to ALLOCATOR
 #[cfg(not(feature = "bump"))]
 #[global_allocator]
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
+static ALLOCATOR: Locked<linked_list::LinkedListAllocator> =
+  Locked::new(linked_list::LinkedListAllocator::new());
 
 #[cfg(feature = "bump")]
 #[global_allocator]
@@ -101,4 +101,11 @@ impl<A> Locked<A> {
   pub fn lock(&self) -> spin::MutexGuard<A> {
     self.inner.lock()
   }
+}
+
+/// Align the given address `addr` upwards to alignment `align`.
+///
+/// Requires that `align` is a power of two.
+pub(crate) fn align_up(addr: usize, align: usize) -> usize {
+  (addr + align - 1) & !(align - 1)
 }
