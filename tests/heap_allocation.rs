@@ -62,6 +62,20 @@ fn many_boxes() {
   }
 }
 
+// This breaks the bump allocator
+#[cfg(not(feature = "bump"))]
+#[test_case]
+fn many_boxes_long_lived() {
+  use alloc::boxed::Box;
+
+  let long_lived = Box::new(1); // new
+  for i in 0..blog_os::allocator::HEAP_SIZE {
+    let x = Box::new(i);
+    assert_eq!(*x, i);
+  }
+  assert_eq!(*long_lived, 1); // new
+}
+
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
   blog_os::test_harness::test_panic_handler(info)

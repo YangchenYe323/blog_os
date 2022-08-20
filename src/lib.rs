@@ -6,6 +6,7 @@
 #![feature(abi_x86_interrupt)] // enable the unstable "x86-interrupt" calling convention
 #![feature(custom_test_frameworks)] // use custom test harness
 #![feature(alloc_error_handler)] // specify a handler when allocation error occurs
+#![feature(const_mut_refs)] // enable mutable reference in const fn
 #![test_runner(crate::test_harness::test_runner)] // specify test_runner
 #![reexport_test_harness_main = "test_main"]
 #![cfg_attr(test, no_main)]
@@ -37,6 +38,9 @@ use naked_interrupts::init_idt;
 use crate::test_harness::{exit_qemu, test_panic_handler, QemuExitCode};
 #[cfg(test)]
 use core::panic::PanicInfo;
+
+#[cfg(all(feature = "bump", feature = "fixed"))]
+compile_error!("features `bump` and `fixed` are mutually exclusive");
 
 /// Test-only panic handler that prints to serial port
 #[cfg(test)]

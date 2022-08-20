@@ -10,13 +10,17 @@ jobs:
   check:
     name: Check
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        features: ["bump", "fixed", "\"\""]
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
           components: rust-src
-      - run: cargo +nightly check --all-features
+      - run: cargo +nightly check --features ${{ matrix.features }}
   
   check_formatting:
     name: Check Formatting
@@ -44,6 +48,10 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        features: ["bump", "fixed", "\"\""]
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -62,3 +70,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --features ${{ matrix.features }}

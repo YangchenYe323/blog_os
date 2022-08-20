@@ -6,6 +6,10 @@ edition = "2018"
 [features]
 # use naked interrupt handler
 naked = []
+# use bump allocator
+bump = []
+# use fixed size allocator
+fixed = []
 
 [[test]]
 name = "stack_overflow"

@@ -1,8 +1,11 @@
 //! This module contains the kernel's heap memory allocators.
 
+pub mod bump;
+pub mod fixed_size_block;
+pub mod linked_list;
+
 use alloc::alloc::{GlobalAlloc, Layout};
 use core::ptr::null_mut;
-use linked_list_allocator::LockedHeap;
 use x86_64::{
   structures::paging::{
     mapper::MapToError, FrameAllocator, Mapper, Page, PageTableFlags, Size4KiB,
@@ -25,7 +28,6 @@ unsafe impl GlobalAlloc for Dummy {
   }
 }
 
-// #[global_allocator]
 #[allow(dead_code)]
 static DUMMY_ALLOCATOR: Dummy = Dummy;
 
@@ -73,5 +75,43 @@ pub fn init_heap(
 
 /// ALERT: don't use allocation inside an interrupt handler, as that might
 /// cause deadlock for concurrent access to ALLOCATOR
+#[cfg(not(any(feature = "bump", feature = "fixed")))]
 #[global_allocator]
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
+static ALLOCATOR: Locked<linked_list::LinkedListAllocator> =
+  Locked::new(linked_list::LinkedListAllocator::new());
+
+#[cfg(feature = "bump")]
+#[global_allocator]
+static ALLOCATOR: Locked<bump::BumpAllocator> =
+  Locked::new(bump::BumpAllocator::new());
+
+#[cfg(feature = "fixed")]
+#[global_allocator]
+static ALLOCATOR: Locked<fixed_size_block::FixedSizeBlockAllocator> =
+  Locked::new(fixed_size_block::FixedSizeBlockAllocator::new());
+
+/// A wrapper around [spin::Mutex] to permit trait implementations.
+pub struct Locked<A> {
+  inner: spin::Mutex<A>,
+}
+
+impl<A> Locked<A> {
+  /// Create a new instance
+  pub const fn new(inner: A) -> Self {
+    Locked {
+      inner: spin::Mutex::new(inner),
+    }
+  }
+
+  /// Lock to get mutable reference of the inner
+  pub fn lock(&self) -> spin::MutexGuard<A> {
+    self.inner.lock()
+  }
+}
+
+/// Align the given address `addr` upwards to alignment `align`.
+///
+/// Requires that `align` is a power of two.
+pub(crate) fn align_up(addr: usize, align: usize) -> usize {
+  (addr + align - 1) & !(align - 1)
+}
