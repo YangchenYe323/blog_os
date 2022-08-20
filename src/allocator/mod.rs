@@ -1,6 +1,7 @@
 //! This module contains the kernel's heap memory allocators.
 
 pub mod bump;
+pub mod fixed_size_block;
 pub mod linked_list;
 
 use alloc::alloc::{GlobalAlloc, Layout};
@@ -74,7 +75,7 @@ pub fn init_heap(
 
 /// ALERT: don't use allocation inside an interrupt handler, as that might
 /// cause deadlock for concurrent access to ALLOCATOR
-#[cfg(not(feature = "bump"))]
+#[cfg(not(any(feature = "bump", feature = "fixed")))]
 #[global_allocator]
 static ALLOCATOR: Locked<linked_list::LinkedListAllocator> =
   Locked::new(linked_list::LinkedListAllocator::new());
@@ -83,6 +84,11 @@ static ALLOCATOR: Locked<linked_list::LinkedListAllocator> =
 #[global_allocator]
 static ALLOCATOR: Locked<bump::BumpAllocator> =
   Locked::new(bump::BumpAllocator::new());
+
+#[cfg(feature = "fixed")]
+#[global_allocator]
+static ALLOCATOR: Locked<fixed_size_block::FixedSizeBlockAllocator> =
+  Locked::new(fixed_size_block::FixedSizeBlockAllocator::new());
 
 /// A wrapper around [spin::Mutex] to permit trait implementations.
 pub struct Locked<A> {

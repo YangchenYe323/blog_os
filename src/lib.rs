@@ -39,6 +39,9 @@ use crate::test_harness::{exit_qemu, test_panic_handler, QemuExitCode};
 #[cfg(test)]
 use core::panic::PanicInfo;
 
+#[cfg(all(feature = "bump", feature = "fixed"))]
+compile_error!("features `bump` and `fixed` are mutually exclusive");
+
 /// Test-only panic handler that prints to serial port
 #[cfg(test)]
 #[panic_handler]
