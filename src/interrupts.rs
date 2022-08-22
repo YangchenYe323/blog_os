@@ -6,7 +6,7 @@ use x86_64::structures::idt::{
   InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode,
 };
 
-use crate::{hlt_loop, print, println};
+use crate::{hlt_loop, println};
 use pic8259::ChainedPics;
 use spin;
 
@@ -117,36 +117,12 @@ extern "x86-interrupt" fn timer_interrupt_handler(_frame: InterruptStackFrame) {
 extern "x86-interrupt" fn keyboard_interrupt_handler(
   _frame: InterruptStackFrame,
 ) {
-  use pc_keyboard::{
-    layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1,
-  };
-  use spin::Mutex;
   use x86_64::instructions::port::Port;
 
-  // the global state machine for processing key events and map event to characters
-  lazy_static! {
-    static ref KEYBOARD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> =
-      Mutex::new(Keyboard::new(
-        layouts::Us104Key,
-        ScancodeSet1,
-        HandleControl::Ignore
-      ));
-  }
-
-  let mut keyboard = KEYBOARD.lock();
-  // the data port of PS/2 controller, which is our I/O port
   let mut port = Port::new(0x60);
   let scancode: u8 = unsafe { port.read() };
-  // record this key-press operation, see if an event is matched
-  if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
-    // if processing the events generates a character to display
-    if let Some(key) = keyboard.process_keyevent(key_event) {
-      match key {
-        DecodedKey::Unicode(character) => print!("{}", character),
-        DecodedKey::RawKey(key) => print!("{:?}", key),
-      }
-    }
-  }
+  // add the scancode to the global queue for asynchronous processing
+  crate::task::keyboard::add_scancode(scancode);
 
   unsafe {
     PICS
