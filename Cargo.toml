@@ -45,6 +45,21 @@ features = ["map_physical_memory"]
 version = "1.0"
 features = ["spin_no_std"]
 
+# Implementations of lock-free data-structures used in kernel
+[dependencies.crossbeam-queue]
+version = "0.2.1"
+default-features = false
+features = ["alloc"]
+
+[dependencies.conquer-once]
+version = "0.3.2"
+default-features = false
+
+[dependencies.futures-util]
+version = "0.3.4"
+default-features = false
+features = ["alloc"]
+
 # enable isa-debug-exit of qemu
 [package.metadata.bootimage]
 run-args = ["-device", "isa-debug-exit,iobase=0xf4,iosize=0x04", "-serial", "stdio"]

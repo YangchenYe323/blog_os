@@ -63,8 +63,25 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     println!("It did not crash!");
 
-    blog_os::hlt_loop();
+    let mut executor = blog_os::task::executor::Executor::new();
+    use blog_os::task::{keyboard::print_keypress, Task};
+    executor.spawn(Task::new(example_task()));
+    executor.spawn(Task::new(print_keypress()));
+    executor.run();
+
+    // blog_os::hlt_loop();
   }
+}
+
+// Below is the example_task function again so that you don't have to scroll up
+
+async fn async_number() -> u32 {
+  42
+}
+
+async fn example_task() {
+  let number = async_number().await;
+  println!("async number: {}", number);
 }
 
 /// This function is called on panic.

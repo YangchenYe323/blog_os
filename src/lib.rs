@@ -23,6 +23,7 @@ pub mod interrupts;
 pub mod memory;
 pub mod naked_interrupts;
 pub mod serial;
+pub mod task;
 pub mod test_harness;
 pub mod vga_buffer;
 
